@@ -35,7 +35,7 @@ resources:
   private_net:
         type: OS::Neutron::Net
         properties:
-         name: private-net
+          name: private-net
 
   private_subnet:
         type: OS::Neutron::Subnet
