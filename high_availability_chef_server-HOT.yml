@@ -250,17 +250,10 @@ resources:
             #!/bin/bash
             sudo apt-get update
 
-
 outputs:
   chefserver-be1_private_ip:
     description: Private IP address of chefserver-be1
     value: { get_attr: [ chefserver-be1, first_address ] }
-  chefserver-be1_public_ip:
-    description: Floating IP address of chefserver-be1
-    value: { get_attr: [ chefserver-be1_floating_ip, floating_ip_address ] }
   chefserver-be2_private_ip:
     description: Private IP address of chefserver-be2
     value: { get_attr: [ chefserver-be1, first_address ] }
-  chefserver-be2_public_ip:
-    description: Floating IP address of chefserver-be2
-    value: { get_attr: [ chefserver-be2_floating_ip, floating_ip_address ] }
