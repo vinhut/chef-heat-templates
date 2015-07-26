@@ -75,20 +75,6 @@ resources:
           fixed_ips:
             - subnet_id: { get_resource: private_subnet }
 
-  chefserver-be1_floating_ip:
-        type: OS::Neutron::FloatingIP
-        properties:
-          floating_network_id: { get_param: public_net }
-          port_id: { get_resource: chefserver-be1_port }
-
-  chefserver-be1-private_port:
-        type: OS::Neutron::Port
-        properties:
-          network_id: { get_resource: backend_net }
-          security_groups: [ get_param: secgroup_id ]
-          fixed_ips:
-            - subnet_id: { get_resource: backend_subnet }
-
   chefserver-be1-private_port:
         type: OS::Neutron::Port
         properties:
@@ -104,12 +90,6 @@ resources:
           security_groups: [ get_param: secgroup_id ]
           fixed_ips:
             - subnet_id: { get_resource: private_subnet }
-
-  chefserver-be2_floating_ip:
-        type: OS::Neutron::FloatingIP
-        properties:
-          floating_network_id: { get_param: public_net }
-          port_id: { get_resource: chefserver-be2_port }
 
   chefserver-be2-private_port:
         type: OS::Neutron::Port
@@ -188,9 +168,9 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
-            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
-            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
-            sudo apt-get install drbd8-utils
+            sudo apt-get install -y drbd8-utils wget
+            sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
 
   chefserver-be2:
         type: OS::Nova::Server
@@ -205,9 +185,9 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
-            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
-            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
-            sudo apt-get install drbd8-utils
+            sudo apt-get install -y drbd8-utils wget
+            sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
 
   chefserver-fe1:
         type: OS::Nova::Server
@@ -221,13 +201,9 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
-            curl https://raw.githubusercontent.com/openstack/cookbook-openstack-common/master/bootstrap.sh \
-            --retry 3 \
-            --silent \
-            --show-error \
-            | /bin/bash -x
-            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
-            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+            sudo apt-get -y wget
+            sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
 
   chefserver-fe2:
         type: OS::Nova::Server
@@ -241,13 +217,9 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
-            curl https://raw.githubusercontent.com/openstack/cookbook-openstack-common/master/bootstrap.sh \
-            --retry 3 \
-            --silent \
-            --show-error \
-            | /bin/bash -x
-            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
-            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+            sudo apt-get -y wget
+            sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
 
   chefserver-fe3:
         type: OS::Nova::Server
@@ -261,13 +233,9 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
-            curl https://raw.githubusercontent.com/openstack/cookbook-openstack-common/master/bootstrap.sh \
-            --retry 3 \
-            --silent \
-            --show-error \
-            | /bin/bash -x
-            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
-            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+            sudo apt-get -y wget
+            sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
 
   chefserver-lb:
         type: OS::Nova::Server
