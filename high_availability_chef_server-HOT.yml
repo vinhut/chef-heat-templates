@@ -31,12 +31,11 @@ parameters:
     type: string
     description : Id of the security groupe
 
-
 resources:
   private_net:
         type: OS::Neutron::Net
         properties:
-          name: private-net
+         name: private-net
 
   private_subnet:
         type: OS::Neutron::Subnet
@@ -44,6 +43,17 @@ resources:
           network_id: { get_resource: private_net }
           cidr: 172.16.2.0/24
           gateway_ip: 172.16.2.1
+
+  backend_net:
+        type: OS::Neutron::Net
+        properties:
+         name: backend
+
+  backend_subnet:
+        type: OS::Neutron::Subnet
+        properties:
+          network_id: { get_resource: backend_net }
+          cidr: 10.10.10.0/24
 
   chefrouter:
         type: OS::Neutron::Router
@@ -71,6 +81,22 @@ resources:
           floating_network_id: { get_param: public_net }
           port_id: { get_resource: chefserver-be1_port }
 
+  chefserver-be1-private_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: backend_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: backend_subnet }
+
+  chefserver-be1-private_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: backend_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: backend_subnet }
+
   chefserver-be2_port:
         type: OS::Neutron::Port
         properties:
@@ -85,23 +111,177 @@ resources:
           floating_network_id: { get_param: public_net }
           port_id: { get_resource: chefserver-be2_port }
 
+  chefserver-be2-private_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: backend_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: backend_subnet }
+
+  chefserver-fe1_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: private_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: private_subnet }
+
+  chefserver-fe1_floating_ip:
+        type: OS::Neutron::FloatingIP
+        properties:
+          floating_network_id: { get_param: public_net }
+          port_id: { get_resource: chefserver-fe1_port }
+
+  chefserver-fe2_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: private_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: private_subnet }
+
+  chefserver-fe2_floating_ip:
+        type: OS::Neutron::FloatingIP
+        properties:
+          floating_network_id: { get_param: public_net }
+          port_id: { get_resource: chefserver-fe2_port }
+
+  chefserver-fe3_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: private_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: private_subnet }
+
+  chefserver-fe3_floating_ip:
+        type: OS::Neutron::FloatingIP
+        properties:
+          floating_network_id: { get_param: public_net }
+          port_id: { get_resource: chefserver-fe3_port }
+
+  chefserver-lb_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: private_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: private_subnet }
+
+  chefserver-lb_floating_ip:
+        type: OS::Neutron::FloatingIP
+        properties:
+          floating_network_id: { get_param: public_net }
+          port_id: { get_resource: chefserver-lb_port }
+
   chefserver-be1:
         type: OS::Nova::Server
         properties:
           name: chefserver-be1
+          key_name: { get_param: key_name }
           image: { get_param: image_id }
           flavor: m1.medium
           networks:
                 - port: { get_resource: chefserver-be1_port }
+                - port: { get_resource: chefserver-be1-private_port }
+          user_data: |
+            #!/bin/bash
+            sudo apt-get update
+            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+            sudo apt-get install drbd8-utils
 
   chefserver-be2:
         type: OS::Nova::Server
         properties:
           name: chefserver-be2
+          key_name: { get_param: key_name }
           image: { get_param: image_id }
           flavor: m1.medium
           networks:
             - port: { get_resource: chefserver-be2_port }
+            - port: { get_resource: chefserver-be2-private_port }
+          user_data: |
+            #!/bin/bash
+            sudo apt-get update
+            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+            sudo apt-get install drbd8-utils
+
+  chefserver-fe1:
+        type: OS::Nova::Server
+        properties:
+          name: chefserver-fe1
+          key_name: { get_param: key_name }
+          image: { get_param: image_id }
+          flavor: m1.medium
+          networks:
+            - port: { get_resource: chefserver-fe1_port }
+          user_data: |
+            #!/bin/bash
+            sudo apt-get update
+            curl https://raw.githubusercontent.com/openstack/cookbook-openstack-common/master/bootstrap.sh \
+            --retry 3 \
+            --silent \
+            --show-error \
+            | /bin/bash -x
+            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+
+  chefserver-fe2:
+        type: OS::Nova::Server
+        properties:
+          name: chefserver-fe2
+          key_name: { get_param: key_name }
+          image: { get_param: image_id }
+          flavor: m1.medium
+          networks:
+            - port: { get_resource: chefserver-fe2_port }
+          user_data: |
+            #!/bin/bash
+            sudo apt-get update
+            curl https://raw.githubusercontent.com/openstack/cookbook-openstack-common/master/bootstrap.sh \
+            --retry 3 \
+            --silent \
+            --show-error \
+            | /bin/bash -x
+            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+
+  chefserver-fe3:
+        type: OS::Nova::Server
+        properties:
+          name: chefserver-fe3
+          key_name: { get_param: key_name }
+          image: { get_param: image_id }
+          flavor: m1.medium
+          networks:
+            - port: { get_resource: chefserver-fe3_port }
+          user_data: |
+            #!/bin/bash
+            sudo apt-get update
+            curl https://raw.githubusercontent.com/openstack/cookbook-openstack-common/master/bootstrap.sh \
+            --retry 3 \
+            --silent \
+            --show-error \
+            | /bin/bash -x
+            wget https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
+            sudo dpkg -i chef-server-core_12.1.2-1_amd64.deb
+
+  chefserver-lb:
+        type: OS::Nova::Server
+        properties:
+          name: chefserver-lb
+          key_name: { get_param: key_name }
+          image: { get_param: image_id }
+          flavor: m1.medium
+          networks:
+            - port: { get_resource: chefserver-lb_port }
+          user_data: |
+            #!/bin/bash
+            sudo apt-get update
+
 
 outputs:
   chefserver-be1_private_ip:
