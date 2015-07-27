@@ -33,9 +33,9 @@ parameters:
     default: admin@fake-email.org
   chefserver-password:
     type: string
-    label: chefserver-passward
+    label: chefserver-password
     description: The password for chef server username
-    default: P@$$w0rd!
+    default: P@$$w0rd
   chefserver-pem:
     type: string
     label: chefserver-pem
