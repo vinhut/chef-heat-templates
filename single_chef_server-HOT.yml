@@ -87,8 +87,8 @@ resources:
         type: OS::Neutron::Subnet
         properties:
           network_id: { get_resource: private_net }
-          cidr: 172.16.2.0/24
-          gateway_ip: 172.16.2.1
+          cidr: 172.16.10.0/24
+          gateway_ip: 172.16.10.1
 
   chefrouter:
         type: OS::Neutron::Router
@@ -120,6 +120,7 @@ resources:
         type: OS::Nova::Server
         properties:
           name: chefserver
+          key_name: { get_param: key_name }
           image: { get_param: image_id }
           flavor: m1.medium
           admin_user: ubuntu
