@@ -1,0 +1,156 @@
+heat_template_version: 2013-05-23
+
+description: >
+  This is an Standalone environment for Chef Server 12.
+  This will install everything that is required
+  for http://docs.chef.io/install_server.html
+
+parameters:
+  chefserver-core:
+    type: string
+    label: chefserver-core
+    description: The chef server core version to pull down
+    default: chef-server-core_12.1.2-1_amd64.deb
+  chefserver-username:
+    type: string
+    label: chefserver-username
+    description: The first username for chef server
+    default: admin
+  chefserver-firstname:
+    type: string
+    label: chefserver-firstname
+    description: The first name for chef server username
+    default: Admin
+  chefserver-lastname:
+    type: string
+    label: chefserver-lastname
+    description: The last name for chef server username
+    default: Jacob
+  chefserver-email:
+    type: string
+    label: chefserver-email
+    description: The email for chef server username
+    default: admin@fake-email.org
+  chefserver-password:
+    type: string
+    label: chefserver-passward
+    description: The password for chef server username
+    default: P@$$w0rd!
+  chefserver-pem:
+    type: string
+    label: chefserver-pem
+    description: The location for the pem for chef server username
+    default: /tmp/admin.pem
+  chefserver-shortname:
+    type: string
+    label: chefserver-shortname
+    description: The short name for chef server org
+    default: default
+  chefserver-fullname:
+    type: string
+    label: chefserver-fullname
+    description: The full name for chef server org
+    default: "Default Inc"
+  key_name:
+    type: string
+    label: key_name
+    description: Name of key-pair to be used for compute instance
+    default: jdizzle
+  image_id:
+    type: string
+    label: image_id
+    description: Name of the image to use for compute instance
+    default: ubuntu-trusty
+  instance_type:
+    type: string
+    label: instance_type
+    description: Type of instance (flavor) to be used
+    default: m1.medium
+    constraints:
+      - allowed_values: [ m1.medium, m1.large, m1.xlarge ]
+        description: Value must be m1.medium, m1.large, or m1.xlarge
+  public_net:
+    type: string
+    description: public network id
+  secgroup_id:
+    type: string
+    description : Id of the security groupe
+
+
+resources:
+  private_net:
+        type: OS::Neutron::Net
+        properties:
+          name: private-net
+
+  private_subnet:
+        type: OS::Neutron::Subnet
+        properties:
+          network_id: { get_resource: private_net }
+          cidr: 172.16.2.0/24
+          gateway_ip: 172.16.2.1
+
+  chefrouter:
+        type: OS::Neutron::Router
+        properties:
+          external_gateway_info:
+            network: { get_param: public_net }
+
+  chefrouter_interface:
+        type: OS::Neutron::RouterInterface
+        properties:
+          router_id: { get_resource: chefrouter }
+          subnet_id: { get_resource: private_subnet }
+
+  chefserver_port:
+        type: OS::Neutron::Port
+        properties:
+          network_id: { get_resource: private_net }
+          security_groups: [ get_param: secgroup_id ]
+          fixed_ips:
+            - subnet_id: { get_resource: private_subnet }
+
+  chefserver_floating_ip:
+        type: OS::Neutron::FloatingIP
+        properties:
+          floating_network_id: { get_param: public_net }
+          port_id: { get_resource: chefserver_port }
+
+  chefserver:
+        type: OS::Nova::Server
+        properties:
+          name: chefserver
+          image: { get_param: image_id }
+          flavor: m1.medium
+          admin_user: ubuntu
+          networks:
+                - port: { get_resource: chefserver_port }
+          user_data:
+            str_replace:
+              template: |
+                #!/bin/bash
+                sudo apt-get update
+                sudo apt-get -y wget
+                sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/$chef_server_version
+                sudo dpkg -i /tmp/$chef_server_version
+                sudo chef-server-ctl reconfigure
+                sudo chef-server-ctl user-create $chef_server_username $chef_server_firstname $chef_server_lastname $chef_server_email $chef_server_password --filename $chef_server_pem
+                sudo chef-server-ctl org-create $chef_server_shortname $chef_server_fullname --association_user $chefserver_username --filename $chef_server_shortname-validator.pem
+              params:
+                $chef_server_version: { get_param: chefserver-core }
+                $chef_server_username: { get_param: chefserver-username }
+                $chef_server_firstname: { get_param: chefserver-firstname }
+                $chef_server_lastname: { get_param: chefserver-lastname }
+                $chef_server_email: { get_param: chefserver-email }
+                $chef_server_password: { get_param: chefserver-password }
+                $chef_server_pem: { get_param: chefserver-pem }
+                $chef_server_shortname: { get_param: chefserver-shortname }
+                $chef_server_full: { get_param: chefserver-fullname }
+
+outputs:
+  chefserver_private_ip:
+    description: Private IP address of chefserver
+    value: { get_attr: [ chefserver, first_address ] }
+  chefserver_public_ip:
+    description: Floating IP address of chefserver
+    value: { get_attr: [ chefserver_floating_ip, floating_ip_address ] }

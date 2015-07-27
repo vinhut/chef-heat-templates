@@ -1,5 +1,15 @@
 
 
+Be sure you have ssh-agent working.
+Add your key to the agent if you haven't already: ssh-add -K
+and add something like the following to .ssh/config
+Host *
+  ForwardAgent yes
+
+ec2-user is the login, the shell is sh, not bash
+
+
+took about 1 hour and 40 mins for the whole thing to come up and running.
 
 
 * commands
