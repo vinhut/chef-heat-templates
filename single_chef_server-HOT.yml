@@ -131,12 +131,13 @@ resources:
               template: |
                 #!/bin/bash
                 sudo apt-get update
+                sudo echo "127.0.0.1  chefserver  chefserver" >> /etc/hosts
                 sudo apt-get -y wget
                 sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/$chef_server_version
                 sudo dpkg -i /tmp/$chef_server_version
                 sudo chef-server-ctl reconfigure
                 sudo chef-server-ctl user-create $chef_server_username $chef_server_firstname $chef_server_lastname $chef_server_email $chef_server_password --filename $chef_server_pem
-                sudo chef-server-ctl org-create $chef_server_shortname $chef_server_fullname --association_user $chefserver_username --filename $chef_server_shortname-validator.pem
+                sudo chef-server-ctl org-create $chef_server_shortname $chef_server_fullname --association_user $chef_server_username --filename $chef_server_shortname-validator.pem
               params:
                 $chef_server_version: { get_param: chefserver-core }
                 $chef_server_username: { get_param: chefserver-username }

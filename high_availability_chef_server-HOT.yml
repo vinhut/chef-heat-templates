@@ -171,6 +171,7 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
+            sudo echo "127.0.0.1  chefserver-be1  chefserver-be1" >> /etc/hosts
             sudo apt-get install -y drbd8-utils wget
             sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
             sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
@@ -189,6 +190,7 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
+            sudo echo "127.0.0.1  chefserver-be2  chefserver-be2" >> /etc/hosts
             sudo apt-get install -y drbd8-utils wget
             sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
             sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
@@ -206,6 +208,7 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
+            sudo echo "127.0.0.1  chefserver-fe1  chefserver-fe1" >> /etc/hosts
             sudo apt-get -y wget
             sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
             sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
@@ -223,6 +226,7 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
+            sudo echo "127.0.0.1  chefserver-fe2  chefserver-fe2" >> /etc/hosts
             sudo apt-get -y wget
             sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
             sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
@@ -240,6 +244,7 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
+            sudo echo "127.0.0.1  chefserver-fe3  chefserver-fe3" >> /etc/hosts
             sudo apt-get -y wget
             sudo wget -P /tmp/ https://web-dl.packagecloud.io/chef/stable/packages/ubuntu/trusty/chef-server-core_12.1.2-1_amd64.deb
             sudo dpkg -i /tmp/chef-server-core_12.1.2-1_amd64.deb
@@ -257,6 +262,7 @@ resources:
           user_data: |
             #!/bin/bash
             sudo apt-get update
+            sudo echo "127.0.0.1  chefserver-lb  chefserver-lb" >> /etc/hosts
 
 outputs:
   chefserver-be1_private_ip:
