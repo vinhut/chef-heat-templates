@@ -55,7 +55,6 @@ parameters:
     type: string
     label: key_name
     description: Name of key-pair to be used for compute instance
-    default: jdizzle
   image_id:
     type: string
     label: image_id
@@ -74,7 +73,7 @@ parameters:
     description: public network id
   secgroup_id:
     type: string
-    description : Id of the security groupe
+    description : Id of the security group
 
 
 resources:
@@ -138,6 +137,9 @@ resources:
                 sudo chef-server-ctl reconfigure
                 sudo chef-server-ctl user-create $chef_server_username $chef_server_firstname $chef_server_lastname $chef_server_email $chef_server_password --filename $chef_server_pem
                 sudo chef-server-ctl org-create $chef_server_shortname $chef_server_fullname --association_user $chef_server_username --filename $chef_server_shortname-validator.pem
+                sudo chef-server-ctl install opscode-manage
+                sudo chef-server-ctl reconfigure
+                sudo opscode-manage-ctl reconfigure
               params:
                 $chef_server_version: { get_param: chefserver-core }
                 $chef_server_username: { get_param: chefserver-username }

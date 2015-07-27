@@ -1,9 +1,7 @@
 heat_template_version: 2013-05-23
 
 description: >
-  This is an HA environment for Chef Server 12.
-  This will install everything that is required
-  for http://docs.chef.io/install_server_ha_drbd.html
+  This is a single compute and router for HOT.
 
 parameters:
   key_name:
@@ -45,19 +43,19 @@ resources:
           cidr: 172.16.2.0/24
           gateway_ip: 172.16.2.1
 
-  chefrouter:
+  instance_router:
         type: OS::Neutron::Router
         properties:
           external_gateway_info:
             network: { get_param: public_net }
 
-  chefrouter_interface:
+  instance_interface:
         type: OS::Neutron::RouterInterface
         properties:
-          router_id: { get_resource: chefrouter }
+          router_id: { get_resource: instance }
           subnet_id: { get_resource: private_subnet }
 
-  chefserver_port:
+  server_port:
         type: OS::Neutron::Port
         properties:
           network_id: { get_resource: private_net }
@@ -65,25 +63,25 @@ resources:
           fixed_ips:
             - subnet_id: { get_resource: private_subnet }
 
-  chefserver_floating_ip:
+  server_floating_ip:
         type: OS::Neutron::FloatingIP
         properties:
           floating_network_id: { get_param: public_net }
-          port_id: { get_resource: chefserver_port }
+          port_id: { get_resource: server_port }
 
-  chefserver:
+  server:
         type: OS::Nova::Server
         properties:
-          name: chefserver
+          name: server
           image: { get_param: image_id }
           flavor: m1.medium
           networks:
-                - port: { get_resource: chefserver_port }
+                - port: { get_resource: server_port }
 
 outputs:
-  chefserver_private_ip:
-    description: Private IP address of chefserver
-    value: { get_attr: [ chefserver, first_address ] }
-  chefserver_public_ip:
-    description: Floating IP address of chefserver
-    value: { get_attr: [ chefserver_floating_ip, floating_ip_address ] }
+  server_private_ip:
+    description: Private IP address of server
+    value: { get_attr: [ server, first_address ] }
+  server_public_ip:
+    description: Floating IP address of server
+    value: { get_attr: [ server_floating_ip, floating_ip_address ] }
