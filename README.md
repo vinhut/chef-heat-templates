@@ -40,25 +40,28 @@ heat stack-create -f single_chef_server-HOT.yml
 The above is the command's you'll need to run in order to boot the single-stack instance. I strongly suggest
 you change them from the defaults there.
 
-After you log in the web-ui via `https://<floating-ip>`, you should go to `https://<floating-ip>/organizations/<CHEFSERVER_SHORTNAME>/getting_started` and pull that down. It'll recreate the validation pem, and set up a knife.rb for you to be able to interface with
-the server you just created.
+After you log in the web-ui via `https://<floating-ip>`, you should go to `https://<floating-ip>/organizations/<CHEFSERVER_SHORTNAME>/getting_started`
+and pull that down. It'll recreate the validation pem, and set up a knife.rb for you to be able to interface with the server you just created.
 
 ## HA chef server
 
 *NOTE*: Please read this section completely if you are planning on attempting this. Then read the referenced
 [install ha chef server with drbd](http://docs.chef.io/install_server_ha_drbd.html) documentation.
 
-The second on is the build out of the [DRBD](http://drbd.linbit.com/) reference architecture from the
+The HA chef server template will build out the  [DRBD](http://drbd.linbit.com/) reference architecture from the
 [install ha chef server with drbd](http://docs.chef.io/install_server_ha_drbd.html) documentation.
 With this build, the stack creates the machines and networks you need for the setup,
-but still requires you to run and build out the disks. Every machine that requires chef-server
-has it downloaded to `/tmp/` and does a `dpkg` install of it. On the backend machines, the template already
-installs the `drbd8-utils` for you. On my cluster it took about 1 hour and 40 minutes for the whole thing to
-come up and running, wait for the line that looks like:
+but still requires you to run and build out the disks and configure chef-server(s). Every machine that requires chef-server package
+has it downloaded to `/tmp/` and does a `dpkg` install of it for you. On the backend machines (be-1 and be-2), the template already
+installs the `drbd8-utils` for you.
+
+On my cluster it took about 1 hour and 40 minutes for the whole thing to come up and running, and be sure to wait for the line that looks like:
 
 ```
 Cloud-init v. 0.7.5 finished at Mon, 27 Jul 2015 21:48:34 +0000. Datasource DataSourceOpenStack [net,ver=2].
 ```
+
+In the bootup log for the instance otherwise it's still in the process of building.
 
 This build also assumes you are running on Ubuntu 14.04. If your glance image for Ubuntu 14.04 is not
 called `ubuntu-trusty` you'll have to override the default, on the `heat stack-create`
