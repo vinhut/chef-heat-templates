@@ -11,6 +11,8 @@ and it's own network with a floating IP.
 source openrc
 SEC_ID=$(nova secgroup-list | awk '/ default / { print $2 }')
 NET_ID=$(nova net-list | awk '/ ext-net / { print $2 }')
+TENANT_ID=$(nova net-list | awk '/ local-net / { print $2 }')
+TENANT_SUBNET=$(neutron subnet-list | awk '/ local-subnet / { print $2 }')
 CHEFSERVER_CORE=chef-server-core_12.1.2-1_amd64.deb
 CHEFSERVER_USERNAME=admin
 CHEFSERVER_FIRSTNAME=Admin
@@ -24,6 +26,8 @@ KEY_NAME=admin
 heat stack-create -f single_chef_server-HOT.yml
                   -P public_net=$NET_ID \
                   -P secgroup_id=$SEC_ID \
+                  -P tenant_subnet=$TENANT_SUBNET \
+                  -P tenant_net=$TENANT_NET \
                   -P chefserver-core=$CHEFSERVER_CORE \
                   -P chefserver-username=$CHEFSERVER_USERNAME \
                   -P chefserver-firstname=$CHEFSERVER_FIRSTNAME \
