@@ -46,11 +46,16 @@ parameters:
     label: chefserver-fullname
     description: The full name for chef server org
     default: "Default Inc"
+  startup_timeout:
+    type: string
+    label: startup_timeout
+    default: 7200
+    description: How long to wait on node coming
   key_name:
     type: string
     label: key_name
     description: Name of key-pair to be used for compute instance
-    default: admin
+    default: jdizzle
   image_id:
     type: string
     label: image_id
@@ -78,11 +83,22 @@ parameters:
     description: tenant subnet id
 
 resources:
+
+  WaitConditionInstance:
+    depends_on: chefserver
+    properties:
+      handle: {Ref: WaitHandleInstance}
+      timeout: {get_param: startup_timeout}
+    type: AWS::CloudFormation::WaitCondition
+
+  WaitHandleInstance:
+    properties: {}
+    type: AWS::CloudFormation::WaitConditionHandle
+
   SecurityGroup:
-    Type: OS::Neutron::SecurityGroup
-    Properties:
-      name:
-          - 'chefserver-securitygroup'
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: chefserver-securitygroup
       description: chefserver security group
       rules:
       - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
@@ -128,6 +144,7 @@ resources:
                 sudo chef-server-ctl install opscode-manage
                 sudo chef-server-ctl reconfigure
                 sudo opscode-manage-ctl reconfigure
+                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "$wc_url"
               params:
                 $chef_server_version: { get_param: chefserver-core }
                 $chef_server_username: { get_param: chefserver-username }
@@ -137,6 +154,7 @@ resources:
                 $chef_server_password: { get_param: chefserver-password }
                 $chef_server_shortname: { get_param: chefserver-shortname }
                 $chef_server_full: { get_param: chefserver-fullname }
+                $wc_url: { get_param: WaitHandleInstance }
 
 outputs:
   chefserver_private_ip:
