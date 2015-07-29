@@ -46,16 +46,11 @@ parameters:
     label: chefserver-fullname
     description: The full name for chef server org
     default: "Default Inc"
-  startup_timeout:
-    type: string
-    label: startup_timeout
-    default: 7200
-    description: How long to wait on node coming
   key_name:
     type: string
     label: key_name
     description: Name of key-pair to be used for compute instance
-    default: jdizzle
+    default: admin
   image_id:
     type: string
     label: image_id
@@ -84,18 +79,7 @@ parameters:
 
 resources:
 
-  WaitConditionInstance:
-    depends_on: chefserver
-    properties:
-      handle: {Ref: WaitHandleInstance}
-      timeout: {get_param: startup_timeout}
-    type: AWS::CloudFormation::WaitCondition
-
-  WaitHandleInstance:
-    properties: {}
-    type: AWS::CloudFormation::WaitConditionHandle
-
-  SecurityGroup:
+  securitygroup:
     type: OS::Neutron::SecurityGroup
     properties:
       name: chefserver-securitygroup
@@ -109,7 +93,7 @@ resources:
         type: OS::Neutron::Port
         properties:
           network_id: { get_param: tenant_net }
-          security_groups: [ {Ref: SecurityGroup} ]
+          security_groups: [ {Ref: securitygroup} ]
           fixed_ips:
             - subnet_id: { get_param: tenant_subnet }
 
@@ -125,10 +109,10 @@ resources:
           name: chefserver
           key_name: { get_param: key_name }
           image: { get_param: image_id }
-          flavor: m1.medium
+          flavor: { get_param: instance_type }
           admin_user: ubuntu
           networks:
-                - port: { get_resource: chefserver_port }
+            - port: { get_resource: chefserver_port }
           user_data:
             str_replace:
               template: |
@@ -144,7 +128,7 @@ resources:
                 sudo chef-server-ctl install opscode-manage
                 sudo chef-server-ctl reconfigure
                 sudo opscode-manage-ctl reconfigure
-                curl -X PUT -H 'Content-Type:' --data-binary '{"Status": "SUCCESS", "Reason": "Configuration Complete", "Data": "Application has completed configuration.", "UniqueId": "0001"}' "$wc_url"
+
               params:
                 $chef_server_version: { get_param: chefserver-core }
                 $chef_server_username: { get_param: chefserver-username }
@@ -154,7 +138,6 @@ resources:
                 $chef_server_password: { get_param: chefserver-password }
                 $chef_server_shortname: { get_param: chefserver-shortname }
                 $chef_server_full: { get_param: chefserver-fullname }
-                $wc_url: { get_param: WaitHandleInstance }
 
 outputs:
   chefserver_private_ip:
