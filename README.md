@@ -37,7 +37,7 @@ heat stack-create -f single_chef_server-HOT.yml
                   -P chefserver-FULLNAME=$CHEFSERVER_FULLNAME \
                   -P image_id=$IMAGE_ID \
                   -P key_name=$KEY_NAME \
-                  chefserver_single-stack
+                  chefserver_standalone_server
 ```
 
 The above are the command's you'll need to run in order to boot the standalone instance. I strongly suggest
