@@ -78,11 +78,22 @@ parameters:
     description: tenant subnet id
 
 resources:
+  SecurityGroup:
+    Type: OS::Neutron::SecurityGroup
+    Properties:
+      name:
+          - 'chefserver-securitygroup'
+      description: chefserver security group
+      rules:
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 80, protocol: tcp, port_range_max: 80}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 443, protocol: tcp, port_range_max: 443}
+
   chefserver_port:
         type: OS::Neutron::Port
         properties:
           network_id: { get_param: tenant_net }
-          security_groups: [ get_param: secgroup_id ]
+          security_groups: [ {Ref: SecurityGroup} ]
           fixed_ips:
             - subnet_id: { get_param: tenant_subnet }
 
