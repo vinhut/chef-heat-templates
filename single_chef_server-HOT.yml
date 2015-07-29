@@ -70,39 +70,32 @@ parameters:
   secgroup_id:
     type: string
     description : Id of the security group
+  tenant_net:
+    type: string
+    description: tenant network id
+  tenant_subnet:
+    type: string
+    description: tenant subnet id
 
 resources:
-  private_net:
-        type: OS::Neutron::Net
-        properties:
-          name: private-net
 
-  private_subnet:
-        type: OS::Neutron::Subnet
-        properties:
-          network_id: { get_resource: private_net }
-          cidr: 172.16.10.0/24
-          gateway_ip: 172.16.10.1
-
-  chefrouter:
-        type: OS::Neutron::Router
-        properties:
-          external_gateway_info:
-            network: { get_param: public_net }
-
-  chefrouter_interface:
-        type: OS::Neutron::RouterInterface
-        properties:
-          router_id: { get_resource: chefrouter }
-          subnet_id: { get_resource: private_subnet }
+  securitygroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: chefserver-securitygroup
+      description: chefserver security group
+      rules:
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 22, protocol: tcp, port_range_max: 22}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 80, protocol: tcp, port_range_max: 80}
+      - {remote_ip_prefix: 0.0.0.0/0, port_range_min: 443, protocol: tcp, port_range_max: 443}
 
   chefserver_port:
         type: OS::Neutron::Port
         properties:
-          network_id: { get_resource: private_net }
-          security_groups: [ get_param: secgroup_id ]
+          network_id: { get_param: tenant_net }
+          security_groups: [ {Ref: securitygroup} ]
           fixed_ips:
-            - subnet_id: { get_resource: private_subnet }
+            - subnet_id: { get_param: tenant_subnet }
 
   chefserver_floating_ip:
         type: OS::Neutron::FloatingIP
@@ -116,10 +109,10 @@ resources:
           name: chefserver
           key_name: { get_param: key_name }
           image: { get_param: image_id }
-          flavor: m1.medium
+          flavor: { get_param: instance_type }
           admin_user: ubuntu
           networks:
-                - port: { get_resource: chefserver_port }
+            - port: { get_resource: chefserver_port }
           user_data:
             str_replace:
               template: |
@@ -135,6 +128,7 @@ resources:
                 sudo chef-server-ctl install opscode-manage
                 sudo chef-server-ctl reconfigure
                 sudo opscode-manage-ctl reconfigure
+
               params:
                 $chef_server_version: { get_param: chefserver-core }
                 $chef_server_username: { get_param: chefserver-username }

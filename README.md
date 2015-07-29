@@ -2,15 +2,17 @@
 
 There are two templates here to help you create your chef server infrastructure.
 
-## single-stack chef server
+## Standalone chef Server
 
-The first is a single-stack instance which is designed to build out a server, router,
-and it's own network with a floating IP.
+The first is a standalone instance which is designed to build out a chef server
+on the network you declare to go on. It also assigns a floating IP to the instance,
+so other machines outside your tenant network can get to it.
 
 ```
 source openrc
-SEC_ID=$(nova secgroup-list | awk '/ default / { print $2 }')
 NET_ID=$(nova net-list | awk '/ ext-net / { print $2 }')
+TENANT_ID=$(nova net-list | awk '/ local-net / { print $2 }')
+TENANT_SUBNET=$(neutron subnet-list | awk '/ local-subnet / { print $2 }')
 CHEFSERVER_CORE=chef-server-core_12.1.2-1_amd64.deb
 CHEFSERVER_USERNAME=admin
 CHEFSERVER_FIRSTNAME=Admin
@@ -23,7 +25,8 @@ IMAGE_ID=ubuntu-trusty
 KEY_NAME=admin
 heat stack-create -f single_chef_server-HOT.yml
                   -P public_net=$NET_ID \
-                  -P secgroup_id=$SEC_ID \
+                  -P tenant_subnet=$TENANT_SUBNET \
+                  -P tenant_net=$TENANT_NET \
                   -P chefserver-core=$CHEFSERVER_CORE \
                   -P chefserver-username=$CHEFSERVER_USERNAME \
                   -P chefserver-firstname=$CHEFSERVER_FIRSTNAME \
@@ -37,11 +40,13 @@ heat stack-create -f single_chef_server-HOT.yml
                   chefserver_single-stack
 ```
 
-The above is the command's you'll need to run in order to boot the single-stack instance. I strongly suggest
+The above are the command's you'll need to run in order to boot the standalone instance. I strongly suggest
 you change them from the defaults there.
 
 After you log in the web-ui via `https://<floating-ip>`, you should go to `https://<floating-ip>/organizations/<CHEFSERVER_SHORTNAME>/getting_started`
-and pull that down. It'll recreate the validation pem, and set up a knife.rb for you to be able to interface with the server you just created.
+and pull that down. Go ahead and unzip the `.zip` file it gives you. Change directory into the `chef-repo` that it should have created for you.
+`knife` should work talking to your new chef server. A good test is either a `knife status` or `knife client list` in your `chef-repo`. With `status`
+nothing should be returned, and when you use the `client` command should see your validator.pem file name come back.
 
 ## HA chef server
 
@@ -53,15 +58,15 @@ The HA chef server template will build out the  [DRBD](http://drbd.linbit.com/) 
 With this build, the stack creates the machines and networks you need for the setup,
 but still requires you to run and build out the disks and configure chef-server(s). Every machine that requires chef-server package
 has it downloaded to `/tmp/` and does a `dpkg` install of it for you. On the backend machines (be-1 and be-2), the template already
-installs the `drbd8-utils` for you.
+installs the `drbd8-utils` for you
 
-On my cluster it took about 1 hour and 40 minutes for the whole thing to come up and running, and be sure to wait for the line that looks like:
+This process could take as long as 2 hours depending on your cluster and machine resources. It should be completed with the following line:
 
 ```
 Cloud-init v. 0.7.5 finished at Mon, 27 Jul 2015 21:48:34 +0000. Datasource DataSourceOpenStack [net,ver=2].
 ```
 
-In the bootup log for the instance otherwise it's still in the process of building.
+in the bootup log in the instance otherwise it's still in the process of building.
 
 This build also assumes you are running on Ubuntu 14.04. If your glance image for Ubuntu 14.04 is not
 called `ubuntu-trusty` you'll have to override the default, on the `heat stack-create`
@@ -89,7 +94,7 @@ Because of heat, ec2-user is the login, the shell is sh, not bash, keep this in 
 
 Also you need to make sure you have ssh-agent working. Otherwise you won't be able to ssh into one of the
 machines with a floating IP and ssh into the `be` machines. Add your key to the agent if you haven't
-already: `ssh-add -K` and add something like the following to .ssh/config
+already: `ssh-add -K` and add something like the following to `.ssh/config`
 
 ```
 Host *
