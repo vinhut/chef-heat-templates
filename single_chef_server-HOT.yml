@@ -67,9 +67,6 @@ parameters:
   public_net:
     type: string
     description: public network id
-  secgroup_id:
-    type: string
-    description : Id of the security group
   tenant_net:
     type: string
     description: tenant network id
@@ -117,23 +114,23 @@ resources:
             str_replace:
               template: |
                 #!/bin/bash
-                sudo echo "127.0.0.1  chefserver  chefserver" >> /etc/hosts
-                curl -s https://packagecloud.io/install/repositories/chef/stable/script.rpm.sh | sudo bash
-                sudo yum install chef-server-core-12.2.0-1.el6.x86_64
-                sudo chef-server-ctl reconfigure
-                sudo yum install chef-marketplace-0.0.2-1.el6.x86_64
-                sudo mkdir /etc/chef-marketplace
-                sudo echo "topology 'chef-marketplace'" >> /etc/opscode/chef-server.rb
-                sudo echo "license['nodes'] = 25" >> /etc/opscode/chef-server.rb
-                sudo echo "support['email'] = 'admin@chef.io'" >> /etc/chef-marketplace/marketplace.rb
-                sudo echo "documentation['url'] = 'docs.chef.io'" >> /etc/chef-marketplace/marketplace.rb
-                sudo echo "role 'aio'" >> /etc/chef-marketplace/marketplace.rb
-                sudo echo "platform 'openstack'" >> /etc/chef-marketplace/marketplace.rb
-                sudo echo "user 'openstack-user'" >> /etc/chef-marketplace/marketplace.rb
-                sudo echo "disable_outboud_traffic false" >> /etc/chef-marketplace/marketplace.rb
-                sudo chef-marketplace-ctl reconfigure
-                sudo chef-marketplace-ctl setup -f $chef_server_firstname -l $chef_server_lastname -e $chef_server_email -o $chef_server_shortname -u $chef_server_username -p $chef_server_password -y
-                sudo chef-marketplace-ctl upgrade -y
+                echo "127.0.0.1  chefserver  chefserver" >> /etc/hosts
+                curl -s https://packagecloud.io/install/repositories/chef/stable/script.rpm.sh | bash
+                yum install -y chef-server-core-12.2.0-1.el6.x86_64
+                chef-server-ctl reconfigure
+                yum install -y chef-marketplace-0.0.2-1.el6.x86_64
+                mkdir /etc/chef-marketplace
+                echo "topology 'chef-marketplace'" >> /etc/opscode/chef-server.rb
+                echo "license['nodes'] = 25" >> /etc/opscode/chef-server.rb
+                echo "support['email'] = 'admin@chef.io'" >> /etc/chef-marketplace/marketplace.rb
+                echo "documentation['url'] = 'docs.chef.io'" >> /etc/chef-marketplace/marketplace.rb
+                echo "role 'aio'" >> /etc/chef-marketplace/marketplace.rb
+                echo "platform 'openstack'" >> /etc/chef-marketplace/marketplace.rb
+                echo "user 'openstack-user'" >> /etc/chef-marketplace/marketplace.rb
+                echo "disable_outboud_traffic false" >> /etc/chef-marketplace/marketplace.rb
+                chef-marketplace-ctl reconfigure
+                chef-marketplace-ctl setup -f $chef_server_firstname -l $chef_server_lastname -e $chef_server_email -o $chef_server_shortname -u $chef_server_username -p $chef_server_password -y
+                chef-marketplace-ctl upgrade -y
 
               params:
                 $chef_server_version: { get_param: chefserver-core }
